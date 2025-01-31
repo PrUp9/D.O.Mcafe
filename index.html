@@ -5,66 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Заказ еды D.O.M</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
     <style>
+        /* Основные стили */
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #f5f2e9; /* Бежевый фон */
-            color: #4d382c; /* Коричневый текст */
+            background-color: #f5f2e9;
+            color: #4d382c;
             margin: 0;
             padding: 0;
         }
         h1 {
             text-align: center;
-            color: #b8860b; /* Золотистый цвет для названия кафе */
+            color: #b8860b;
             margin-top: 20px;
-            font-size: 2rem;
-            font-weight: bold;
-        }
-        .menu-category {
-            margin: 20px;
-            padding: 10px;
-            border-bottom: 1px solid #d2b48c; /* Золотистая линия */
         }
         .menu-item {
             display: flex;
             align-items: center;
             margin: 10px 0;
             padding: 10px;
-            background-color: #fff8dc; /* Светло-золотистый фон */
+            background-color: #fff8dc;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
         }
-        .menu-item img {
-            width: 100px;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-right: 15px;
-        }
-        .menu-item .details {
-            flex-grow: 1;
-        }
-        .menu-item .price {
-            font-weight: bold;
-            color: #b8860b; /* Золотистый цвет для цен */
-        }
-        button {
-            background-color: #b8860b; /* Золотистая кнопка */
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #a0522d; /* Коричневый при наведении */
+        .menu-item.active {
+            opacity: 1;
+            transform: translateY(0);
         }
         .cart {
             margin: 20px;
             padding: 10px;
-            background-color: #fff8dc; /* Светло-золотистый фон */
+            background-color: #fff8dc;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        #qr-code {
+            margin: 20px auto;
+            width: 200px;
         }
     </style>
 </head>
@@ -75,13 +56,20 @@
         <h2>Корзина</h2>
         <ul id="cart-items"></ul>
         <p>Общая сумма: <span id="total">0</span> ₽</p>
-        <button onclick="checkout()">Оформить заказ</button>
+        <div class="payment-options">
+            <button onclick="payWithTelegram()">Оплатить онлайн</button>
+            <button onclick="payByTransfer()">Оплатить переводом</button>
+        </div>
+        <div id="qr-code"></div>
+        <div class="order-status">
+            <p>Статус заказа: <span id="status">Ожидание подтверждения</span></p>
+        </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
 
-        // Полное меню с разделами
+                     // Полное меню с разделами
         const menuData = {
             "Мангал": [
                 { name: "Шашлык из свинины", price: 900, image: "https://example.com/shashlik-svinina.jpg" },
@@ -212,14 +200,18 @@
             });
         }
 
-        // Добавление в корзину
+        // Анимация
+        document.querySelectorAll('.menu-item').forEach(item => {
+            setTimeout(() => item.classList.add('active'), 100);
+        });
+
+        // Корзина
         function addToCart(category, index) {
             const item = menuData[category][index];
             cart.push(item);
             updateCart();
         }
 
-        // Обновление корзины
         function updateCart() {
             const cartItems = document.getElementById('cart-items');
             const total = document.getElementById('total');
@@ -234,9 +226,28 @@
             total.textContent = sum;
         }
 
-        // Оформление заказа
-        function checkout() {
-            tg.sendData(JSON.stringify({ action: "checkout", cart }));
+        // Оплата
+        function payWithTelegram() {
+            alert("Оплата через Telegram Payments пока недоступна.");
+        }
+
+        function payByTransfer() {
+            alert("Оплатите заказ переводом на карту: 1234 5678 9012 3456");
+            generateQRCode();
+            updateStatus("Ожидание перевода");
+        }
+
+        // QR-код
+        function generateQRCode() {
+            const qrDiv = document.getElementById('qr-code');
+            QRCode.toCanvas(qrDiv, "1234 5678 9012 3456", function (error) {
+                if (error) console.error(error);
+            });
+        }
+
+        // Статус заказа
+        function updateStatus(newStatus) {
+            document.getElementById('status').textContent = newStatus;
         }
 
         // Настройка интерфейса
